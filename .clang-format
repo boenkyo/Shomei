@@ -1,15 +1,53 @@
-AllowShortFunctionsOnASingleLine: Inline
-BasedOnStyle: Google
+#BasedOnStyle: Google
+Language: Cpp
+
+# Lines
+ColumnLimit: 80
+AllowShortFunctionsOnASingleLine: All
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
+AlwaysBreakTemplateDeclarations: Yes
+CompactNamespaces: true
+
+# Wrapping / Packing
 BinPackArguments: false
 BinPackParameters: false
 BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
-ColumnLimit: 120
-AccessModifierOffset: '-4'
-IndentWidth: '4'
-Language: Cpp
-TabWidth: '4'
-UseTab: ForIndentation
-IndentPPDirectives: AfterHash
+
+# Alignment
+AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
+AlignConsecutiveMacros: true
+AlignOperands: true
+AlignTrailingComments: true
+AlignEscapedNewlines: Right
+PointerAlignment: Left
+
+# Classes
+AccessModifierOffset: -3
+
+# Indentation
+TabWidth: 3
+IndentWidth: 3
+ContinuationIndentWidth: 3
+UseTab: ForIndentation
 IndentCaseLabels: false
+IndentPPDirectives: AfterHash
+SpacesBeforeTrailingComments: 2
+IndentCaseLabels: true
+
+# Misc
+FixNamespaceComments: true
+
+# Includes
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# Penalties
+PenaltyReturnTypeOnItsOwnLine: 1000
