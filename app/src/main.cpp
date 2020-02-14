@@ -1,9 +1,11 @@
 ﻿#include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <execution>
 #include <iostream>
 #include <vector>
+
 
 #include <SDL.h>
 #include <glm/common.hpp>
@@ -14,16 +16,17 @@
 #include <glm/vector_relational.hpp>
 
 #include "vertex_buffer.hpp"
+#include "matrix_base.hpp"
 
-uint32_t to_color(const glm::vec4& vec) {
-	return (uint32_t(vec.r * 255.0f) << 24) | (uint32_t(vec.g * 255.0f) << 16) |
-	       (uint32_t(vec.b * 255.0f) << 8) | (uint32_t(vec.a * 255.0f));
+uint32_t color_int(const glm::vec4& v) {
+	return (uint32_t(v.r * 255.0f) << 24) | (uint32_t(v.g * 255.0f) << 16) |
+	       (uint32_t(v.b * 255.0f) << 8) | (uint32_t(v.a * 255.0f));
 }
 
-glm::vec2 ndc_to_viewport(const glm::vec2 v, int w, int h) {
+glm::vec2 ndc_to_viewport(const glm::vec2& v, int width, int height) {
 	return {
-	   (v.x + 1.0f) * 0.5f * w,
-	   (v.y + 1.0f) * 0.5f * h,
+	   (v.x + 1.0f) * 0.5f * width,
+	   (v.y + 1.0f) * 0.5f * height,
 	};
 }
 
@@ -55,7 +58,7 @@ int main(int argc, char* args[]) {
        0.5f, 0.2f,   1.0f, 0.8f, 0.0f,
    };
 	// clang-format on
-   std::size_t size = sizeof(vertices) / sizeof(float);
+	std::size_t size = sizeof(vertices) / sizeof(float);
 
 	sm::VertexBuffer<float> buffer(vertices, size);
 
@@ -64,14 +67,24 @@ int main(int argc, char* args[]) {
 	pos_attribute.index     = 0;
 	pos_attribute.offset    = 0;
 	pos_attribute.stride    = 5;
-	buffer.def_attribute(pos_attribute);
+	buffer.add_attribute(pos_attribute);
 
 	sm::Attribute color_attribute;
 	color_attribute.dimension = sm::Dimension::Three;
 	color_attribute.index     = 1;
 	color_attribute.offset    = 2;
 	color_attribute.stride    = 5;
-	buffer.def_attribute(color_attribute);
+	buffer.add_attribute(color_attribute);
+
+	float time        = 0.0f;
+	float dt          = 0.0f;
+	auto current_time = std::chrono::high_resolution_clock::now();
+
+   MatrixBase<float> mat;
+
+   std::cout << mat.x;
+   std::cout << mat.y;
+   std::cout << mat.z;
 
 	while (true) {
 		SDL_Event event;
@@ -79,7 +92,16 @@ int main(int argc, char* args[]) {
 			if (event.type == SDL_QUIT) exit(0);
 		}
 
-      buffer.set_data(vertices, size);
+      dt = float(std::chrono::duration_cast<std::chrono::nanoseconds>(
+		               (std::chrono::high_resolution_clock::now() - current_time))
+		               .count()) /
+		     1000000000.f;
+		current_time = std::chrono::high_resolution_clock::now();
+		time += dt;
+
+      //std::cout << 1.0f / dt << std::endl;
+
+		buffer.set_data(vertices, size);
 
 		std::for_each(std::execution::seq,
 		              buffer.vertex_indices().begin(),
@@ -101,42 +123,43 @@ int main(int argc, char* args[]) {
 		              });
 
 		// "rasterize"
-		std::for_each(
-		   std::execution::seq,
-		   buffer.vertex_indices().begin(),
-		   buffer.vertex_indices().end(),
-		   [&](auto& n) {
-			   sm::AttributePtr pos_ptr = buffer.attribute_ptr(0, n);
-			   float* pos               = pos_ptr.data;
-			   glm::vec2 vertex_pos     = glm::make_vec2(pos);
+		std::for_each(std::execution::seq,
+		              buffer.vertex_indices().begin(),
+		              buffer.vertex_indices().end(),
+		              [&](auto& n) {
+			              sm::AttributePtr pos_ptr = buffer.attribute_ptr(0, n);
+			              float* pos               = pos_ptr.data;
+			              glm::vec2 vertex_pos     = glm::make_vec2(pos);
 
-			   sm::AttributePtr color_ptr = buffer.attribute_ptr(1, n);
-			   float* color               = color_ptr.data;
-			   glm::vec3 vertex_color     = glm::make_vec3(color);
+			              sm::AttributePtr color_ptr = buffer.attribute_ptr(1, n);
+			              float* color               = color_ptr.data;
+			              glm::vec3 vertex_color     = glm::make_vec3(color);
 
-			   if (n < 2) {
+			              if (n < 2) {
 
-               sm::AttributePtr next_pos_ptr = buffer.attribute_ptr(0, n + 1);
-               float* next_pos               = next_pos_ptr.data;
-               glm::vec2 next_vertex_pos     = glm::make_vec2(next_pos);
+				              sm::AttributePtr next_pos_ptr =
+				                 buffer.attribute_ptr(0, n + 1);
+				              float* next_pos           = next_pos_ptr.data;
+				              glm::vec2 next_vertex_pos = glm::make_vec2(next_pos);
 
-				   auto& start = vertex_pos;
-				   auto& end   = next_vertex_pos;
+				              auto& start = vertex_pos;
+				              auto& end   = next_vertex_pos;
 
-				   for (int x = int(start.x); x <= end.x; ++x) {
-					   float t = (x - start.x) / float(end.x - start.x);
-					   int y   = int(glm::mix(start.y, end.y, t));
+				              for (int x = int(start.x); x <= end.x; ++x) {
+					              float t = (x - start.x) / float(end.x - start.x);
+					              int y   = int(glm::mix(start.y, end.y, t));
 
-					   pixels[x + y * w] = to_color(glm::vec4(vertex_color, 1.0f));
-				   }
-			   }
-		   });
+					              pixels[x + y * w] =
+					                 color_int(glm::vec4(vertex_color, 1.0f));
+				              }
+			              }
+		              });
 
 		SDL_UpdateTexture(tex, NULL, pixels.data(), w * sizeof(std::uint32_t));
 		SDL_RenderCopy(renderer, tex, NULL, NULL);
 		SDL_RenderPresent(renderer);
 
-		std::fill(pixels.begin(), pixels.end(), to_color(glm::vec4(0.0f)));
+		std::fill(pixels.begin(), pixels.end(), color_int(glm::vec4(0.0f)));
 	}
 
 	return 0;

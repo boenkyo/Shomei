@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -32,10 +34,10 @@ struct AttributePtr {
 template <typename T>
 class VertexBuffer {
 public:
-	VertexBuffer(T vertices[], std::size_t size);
+	VertexBuffer(const T vertices[], std::size_t size);
 
-	void set_data(T vertices[], std::size_t size);
-	void def_attribute(const sm::Attribute& attribute);
+	void set_data(const T vertices[], std::size_t size);
+	void add_attribute(const sm::Attribute& attribute);
 
    T* data();
 	sm::AttributePtr<T> attribute_ptr(std::size_t index, std::size_t n);
@@ -57,16 +59,16 @@ T* VertexBuffer<T>::data() {
 }
 
 template <typename T>
-VertexBuffer<T>::VertexBuffer(T vertices[], std::size_t size)
+VertexBuffer<T>::VertexBuffer(const T vertices[], std::size_t size)
     : m_data(&vertices[0], &vertices[size]) {}
 
 template <typename T>
-void VertexBuffer<T>::set_data(T vertices[], std::size_t size) {
+void VertexBuffer<T>::set_data(const T vertices[], std::size_t size) {
 	std::copy(&vertices[0], &vertices[size], m_data.begin());
 }
 
 template <typename T>
-void VertexBuffer<T>::def_attribute(const sm::Attribute& attribute) {
+void VertexBuffer<T>::add_attribute(const sm::Attribute& attribute) {
 	assert(attribute.index < MAX_ATTRIBUTES);
    assert(attribute.dimension != sm::Dimension::Zero);
 
